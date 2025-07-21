@@ -10,7 +10,7 @@ cells.append({
         "\n",
         "This notebook loads property transaction data from the Land Registry CSV,\n",
         "geocodes the postcodes to latitude/longitude and plots them on a map using Folium.\n",
-        "Marker colours indicate relative price bands. Click a marker to see details about the property." 
+        "Marker colours indicate relative price bands. Click a marker to see details about the property."
     ]
 })
 
@@ -19,16 +19,15 @@ cells.append({
     "execution_count": None,
     "metadata": {},
     "outputs": [],
-    "source": [
-        "# Install dependencies if running in a fresh environment\n",
-        "import sys, subprocess\n",
-        "for pkg in ['pandas','folium','pgeocode','numpy']:\n",
-        "    if pkg not in sys.modules:\n",
-        "        try:\n",
-        "            __import__(pkg)\n",
-        "        except ImportError:\n",
-        "            subprocess.check_call([sys.executable, '-m', 'pip', 'install', pkg])\n"
-    ]
+    "source": """# Install dependencies if running in a fresh environment
+import sys, subprocess
+for pkg in ['pandas','folium','pgeocode','numpy','matplotlib']:
+    if pkg not in sys.modules:
+        try:
+            __import__(pkg)
+        except ImportError:
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', pkg])
+"""
 })
 
 cells.append({
@@ -36,12 +35,13 @@ cells.append({
     "execution_count": None,
     "metadata": {},
     "outputs": [],
-    "source": [
-        "import pandas as pd\n",
-        "import folium\n",
-        "import pgeocode\n",
-        "import numpy as np\n"
-    ]
+    "source": """import pandas as pd
+import folium
+from folium.plugins import HeatMapWithTime
+import pgeocode
+import numpy as np
+import matplotlib.pyplot as plt
+"""
 })
 
 cells.append({
@@ -49,53 +49,84 @@ cells.append({
     "execution_count": None,
     "metadata": {},
     "outputs": [],
-    "source": [
-        "# Load the CSV file\n",
-        "columns = ['transaction_id', 'price', 'date', 'postcode', 'property_type', 'old_new', 'duration', ",
-        "'paon', 'saon', 'street', 'locality', 'town', 'district', 'county', 'ppd_cat', 'record_status']\n",
-        "df = pd.read_csv('ppd_data (2).csv', header=None, names=columns)\n",
-        "df['price'] = df['price'].astype(float)\n",
-        "\n",
-        "# Geocode postcodes to get latitude and longitude\n",
-        "nomi = pgeocode.Nominatim('gb')\n",
-        "df[['lat', 'lon']] = df['postcode'].apply(lambda x: nomi.query_postal_code(x)[['latitude','longitude']])\n",
-        "df = df.dropna(subset=['lat','lon'])\n",
-        "\n",
-        "# Bin prices into 5 quantiles\n",
-        "quantiles = pd.qcut(df['price'], 5, labels=False)\n",
-        "colours = ['blue', 'green', 'yellow', 'orange', 'red']\n",
-        "df['colour'] = quantiles.apply(lambda x: colours[int(x)])\n",
-        "\n",
-        "# Create the map centred on the mean location\n",
-        "m = folium.Map(location=[df['lat'].mean(), df['lon'].mean()], zoom_start=10)\n",
-        "\n",
-        "# Plot each property\n",
-        "for _, row in df.iterrows():\n",
-        "    popup_text = f\"{row['street']} {row['postcode']}<br>£{row['price']:,}<br>{row['date']}\"\n",
-        "    folium.CircleMarker(\n",
-        "        location=[row['lat'], row['lon']],\n",
-        "        radius=5,\n",
-        "        color=row['colour'],\n",
-        "        fill=True,\n",
-        "        fill_color=row['colour'],\n",
-        "        popup=folium.Popup(popup_text, max_width=250)\n",
-        "    ).add_to(m)\n",
-        "\n",
-        "# Add a legend\n",
-        "legend_html = '''<div style=\"position: fixed; bottom: 50px; left: 50px; width: 150px;\n",
-        "height: 130px; border:2px solid grey; background-color:white; z-index:9999; font-size:14px;\">\n",
-        "&nbsp;<b>Price Range</b><br>\n",
-        "&nbsp;<i style=\"background:blue;\">&nbsp;&nbsp;&nbsp;&nbsp;</i>&nbsp;Lowest<br>\n",
-        "&nbsp;<i style=\"background:green;\">&nbsp;&nbsp;&nbsp;&nbsp;</i><br>\n",
-        "&nbsp;<i style=\"background:yellow;\">&nbsp;&nbsp;&nbsp;&nbsp;</i><br>\n",
-        "&nbsp;<i style=\"background:orange;\">&nbsp;&nbsp;&nbsp;&nbsp;</i><br>\n",
-        "&nbsp;<i style=\"background:red;\">&nbsp;&nbsp;&nbsp;&nbsp;</i>&nbsp;Highest\n",
-        "</div>'''\n",
-        "m.get_root().html.add_child(folium.Element(legend_html))\n",
-        "\n",
-        "m.save('house_price_map.html')\n",
-        "m\n"
-    ]
+    "source": """# Load the CSV file
+columns = ['transaction_id','price','date','postcode','property_type','old_new','duration','paon','saon','street','locality','town','district','county','ppd_cat','record_status']
+df = pd.read_csv('ppd_data (2).csv', header=None, names=columns)
+df['price'] = df['price'].astype(float)
+df['date'] = pd.to_datetime(df['date'])
+
+# Geocode postcodes
+nomi = pgeocode.Nominatim('gb')
+df[['lat','lon']] = df['postcode'].apply(lambda x: nomi.query_postal_code(x)[['latitude','longitude']])
+df = df.dropna(subset=['lat','lon'])
+
+# Bin prices into 5 quantiles
+quantiles = pd.qcut(df['price'], 5, labels=False)
+colours = ['blue','green','yellow','orange','red']
+df['colour'] = quantiles.apply(lambda x: colours[int(x)])
+
+legend_html = '''<div style="position: fixed; bottom: 50px; left: 50px; width: 150px;
+height: 130px; border:2px solid grey; background-color:white; z-index:9999; font-size:14px;">
+&nbsp;<b>Price Range</b><br>
+&nbsp;<i style=\"background:blue;\">&nbsp;&nbsp;&nbsp;&nbsp;</i>&nbsp;Lowest<br>
+&nbsp;<i style=\"background:green;\">&nbsp;&nbsp;&nbsp;&nbsp;</i><br>
+&nbsp;<i style=\"background:yellow;\">&nbsp;&nbsp;&nbsp;&nbsp;</i><br>
+&nbsp;<i style=\"background:orange;\">&nbsp;&nbsp;&nbsp;&nbsp;</i><br>
+&nbsp;<i style=\"background:red;\">&nbsp;&nbsp;&nbsp;&nbsp;</i>&nbsp;Highest
+</div>'''
+
+def create_map(data):
+    m = folium.Map(location=[data['lat'].mean(), data['lon'].mean()], zoom_start=10)
+    for _, row in data.iterrows():
+        popup_text = f"{row['street']} {row['postcode']}<br>£{row['price']:,}<br>{row['date'].date()}"
+        folium.CircleMarker(
+            location=[row['lat'], row['lon']],
+            radius=5,
+            color=row['colour'],
+            fill=True,
+            fill_color=row['colour'],
+            popup=folium.Popup(popup_text, max_width=250)
+        ).add_to(m)
+    m.get_root().html.add_child(folium.Element(legend_html))
+    return m
+
+m = create_map(df)
+m.save('house_price_map.html')
+m
+"""
+})
+
+cells.append({
+    "cell_type": "code",
+    "execution_count": None,
+    "metadata": {},
+    "outputs": [],
+    "source": """# Heatmap with timeline slider
+df['year_month'] = df['date'].dt.to_period('M')
+time_index = sorted(df['year_month'].unique().astype(str))
+heat_data = []
+for period in time_index:
+    subset = df[df['year_month'] == period]
+    heat_data.append(subset[['lat','lon','price']].values.tolist())
+
+m_heat = folium.Map(location=[df['lat'].mean(), df['lon'].mean()], zoom_start=10)
+HeatMapWithTime(heat_data, index=time_index, auto_play=False, max_opacity=0.7).add_to(m_heat)
+m_heat
+"""
+})
+
+cells.append({
+    "cell_type": "code",
+    "execution_count": None,
+    "metadata": {},
+    "outputs": [],
+    "source": """# Line graph showing average monthly price trend
+df_monthly = df.set_index('date').resample('M')['price'].mean()
+ax = df_monthly.plot(marker='o', figsize=(8,4))
+ax.set_ylabel('Average Price (£)')
+ax.set_title('Average Property Price Over Time')
+ax.figure
+"""
 })
 
 notebook = {
