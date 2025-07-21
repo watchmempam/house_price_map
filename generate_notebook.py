@@ -3,7 +3,11 @@ import argparse
 import os
 
 parser = argparse.ArgumentParser(description="Generate house price notebook")
-parser.add_argument("--csv", default="ppd_data (2).csv", help="Input CSV file")
+parser.add_argument(
+    "--csv",
+    default="trafford prices.csv",
+    help="Input CSV file"
+)
 parser.add_argument("--output", default="house_price_map.ipynb", help="Output notebook")
 args = parser.parse_args()
 
