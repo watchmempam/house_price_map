@@ -12,7 +12,7 @@ Run the script to build the website locally:
 python map_website.py
 ```
 
-This loads the data from `trafford prices.csv`, geocodes the postcodes and creates `site/index.html` with the map. Open this file in a web browser (desktop or mobile) to view and interact with the map. You can zoom and pan around the data points.
+This loads the data from `trafford prices.csv`, geocodes the postcodes and creates `site/index.html` with the map. The repository also includes a copy of this file at the repository root (`index.html`). Open either file in a web browser (desktop or mobile) to view and interact with the map. You can zoom and pan around the data points.
 
 ## GitHub Pages
 
