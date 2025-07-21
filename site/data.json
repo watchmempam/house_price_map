@@ -1,0 +1,12 @@
+[
+  {"postcode": "M11 1AR", "street": "CHEADLE STREET", "price": 130000, "date": "2025-04-03", "lat": 53.480, "lon": -2.204},
+  {"postcode": "M11 1DR", "street": "WHELER STREET", "price": 114000, "date": "2025-03-25", "lat": 53.479, "lon": -2.201},
+  {"postcode": "M11 1HX", "street": "ROSINA STREET", "price": 237500, "date": "2025-04-17", "lat": 53.481, "lon": -2.205},
+  {"postcode": "M11 1JY", "street": "DELAMERE STREET", "price": 255000, "date": "2025-03-14", "lat": 53.482, "lon": -2.207},
+  {"postcode": "M11 1NA", "street": "KETTON CLOSE", "price": 107000, "date": "2025-03-31", "lat": 53.482, "lon": -2.208},
+  {"postcode": "M11 1PL", "street": "UPTON STREET", "price": 290000, "date": "2025-04-11", "lat": 53.483, "lon": -2.203},
+  {"postcode": "M11 1WS", "street": "MATTISON STREET", "price": 147000, "date": "2025-03-21", "lat": 53.484, "lon": -2.209},
+  {"postcode": "M11 2AJ", "street": "HERNE STREET", "price": 148000, "date": "2025-01-17", "lat": 53.472, "lon": -2.196},
+  {"postcode": "M11 2AZ", "street": "WILSON STREET", "price": 113000, "date": "2025-03-12", "lat": 53.474, "lon": -2.193},
+  {"postcode": "M11 2JD", "street": "HOVIS STREET", "price": 125000, "date": "2025-01-17", "lat": 53.475, "lon": -2.192}
+]
