@@ -1,4 +1,14 @@
 import json
+import argparse
+import os
+
+parser = argparse.ArgumentParser(description="Generate house price notebook")
+parser.add_argument("--csv", default="ppd_data (2).csv", help="Input CSV file")
+parser.add_argument("--output", default="house_price_map.ipynb", help="Output notebook")
+args = parser.parse_args()
+
+csv_file = args.csv
+output_notebook = args.output
 
 cells = []
 
@@ -37,21 +47,16 @@ cells.append({
     "outputs": [],
     "source": """import pandas as pd
 import folium
-from folium.plugins import HeatMapWithTime
+from folium.plugins import HeatMapWithTime, MarkerCluster, Fullscreen
 import pgeocode
 import numpy as np
 import matplotlib.pyplot as plt
 """
 })
 
-cells.append({
-    "cell_type": "code",
-    "execution_count": None,
-    "metadata": {},
-    "outputs": [],
-    "source": """# Load the CSV file
+load_and_map_code = f"""# Load the CSV file
 columns = ['transaction_id','price','date','postcode','property_type','old_new','duration','paon','saon','street','locality','town','district','county','ppd_cat','record_status']
-df = pd.read_csv('ppd_data (2).csv', header=None, names=columns)
+df = pd.read_csv('{csv_file}', header=None, names=columns)
 df['price'] = df['price'].astype(float)
 df['date'] = pd.to_datetime(df['date'])
 
@@ -77,8 +82,10 @@ height: 130px; border:2px solid grey; background-color:white; z-index:9999; font
 
 def create_map(data):
     m = folium.Map(location=[data['lat'].mean(), data['lon'].mean()], zoom_start=10)
+    Fullscreen().add_to(m)
+    marker_cluster = MarkerCluster().add_to(m)
     for _, row in data.iterrows():
-        popup_text = f"{row['street']} {row['postcode']}<br>£{row['price']:,}<br>{row['date'].date()}"
+        popup_text = f"{{row['street']}} {{row['postcode']}}<br>£{{row['price']:,}}<br>{{row['date'].date()}}"
         folium.CircleMarker(
             location=[row['lat'], row['lon']],
             radius=5,
@@ -86,14 +93,21 @@ def create_map(data):
             fill=True,
             fill_color=row['colour'],
             popup=folium.Popup(popup_text, max_width=250)
-        ).add_to(m)
+        ).add_to(marker_cluster)
     m.get_root().html.add_child(folium.Element(legend_html))
     return m
 
 m = create_map(df)
-m.save('house_price_map.html')
+m.save(os.path.splitext(output_notebook)[0] + '.html')
 m
 """
+
+cells.append({
+    "cell_type": "code",
+    "execution_count": None,
+    "metadata": {},
+    "outputs": [],
+    "source": load_and_map_code
 })
 
 cells.append({
@@ -146,5 +160,5 @@ notebook = {
     "nbformat_minor": 2
 }
 
-with open('house_price_map.ipynb', 'w') as f:
+with open(output_notebook, 'w') as f:
     json.dump(notebook, f, indent=2)
